@@ -23,8 +23,8 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
-      <webServer id="19a4be74-a148-4086-b8da-124a185feae3" name="epona-01">
-        <fileTransfer accessType="SFTP" host="epona-01.cs.huji.ac.il" port="22" sshConfigId="72955001-4cb3-41c3-affe-f63d3964dfc7" sshConfig="orens@epona-01.cs.huji.ac.il:22 password">
+      <webServer id="cd9cc1b0-aaef-4f2a-831c-4c778c434b8d" name="epona-01.cs.huji.ac.il">
+        <fileTransfer accessType="SFTP" host="epona-01.cs.huji.ac.il" port="22" sshConfigId="b948ffe9-cd73-4d76-9698-41484fa0ff95" sshConfig="orens@epona-01.cs.huji.ac.il:22 agent" authAgent="true">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
