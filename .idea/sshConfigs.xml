@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" connectionConfig="{&quot;serverAliveInterval&quot;:300}" host="epona-01.cs.huji.ac.il" id="72955001-4cb3-41c3-affe-f63d3964dfc7" port="22" nameFormat="DESCRIPTIVE" username="orens" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="e2889f1a-4707-48e6-93e9-73236fa4e7b4" name="binky-01.cs.huji.ac.il">
+        <fileTransfer accessType="SFTP" host="epona-01.cs.huji.ac.il" port="22" sshConfigId="72955001-4cb3-41c3-affe-f63d3964dfc7" sshConfig="orens@epona-01.cs.huji.ac.il:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="ff8098f6-2c75-4773-a3db-4d67d306571c" name="orens@firth-02">
+        <fileTransfer rootFolder="/cs/labs/dshshaf/orens" accessType="SFTP" host="epona-01.cs.huji.ac.il" port="22" sshConfigId="72955001-4cb3-41c3-affe-f63d3964dfc7" sshConfig="orens@epona-01.cs.huji.ac.il:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="1ea6e6f8-b78c-47cf-99a8-bc542ed002ea" name="cyril-01">
+        <fileTransfer rootFolder="/cs/labs/dshahaf/orens" accessType="SFTP" host="epona-01.cs.huji.ac.il" port="22" sshConfigId="72955001-4cb3-41c3-affe-f63d3964dfc7" sshConfig="orens@epona-01.cs.huji.ac.il:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="19a4be74-a148-4086-b8da-124a185feae3" name="epona-01">
+        <fileTransfer accessType="SFTP" host="epona-01.cs.huji.ac.il" port="22" sshConfigId="72955001-4cb3-41c3-affe-f63d3964dfc7" sshConfig="orens@epona-01.cs.huji.ac.il:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
