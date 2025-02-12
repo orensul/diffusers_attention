@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from PIL import Image  # Import the Pillow library
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
+
+import yaml
 from diffusers import FluxPipeline
 from visualization_utils import visualize_tokens_attentions
 from FLUX.flux_pipeline import AttentionFluxPipeline
@@ -17,7 +19,17 @@ access_token_read = "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"
 access_token_write = "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"
 login(token=access_token_write)
 PROMPT_LEN = 77
+prompts_path = 'prompts_benchmark/prompts.yaml'
 prompts = ["a photo of an astronaut riding a horse on mars", "a photo of an astronaut sitting with a pina colada cocktail in the beach of Thiland", "a photo of an astronaut landing on mars", "a photo of an astronaut leaving the earth", "a photo of an astronaut with a cat on mars"]
+prompts = ["A photo of An athletic woman, lifting weights", "A photo of An athletic woman, at a sports stadium", "A photo of An athletic woman, wearing a tracksuit", "A photo of An athletic woman, dressed in a ballet outfit", "A photo of An athletic woman, wearing hiking attire"]
+
+
+
+
+# end range should be at most 17
+
+timestep_ranges = [[3, 8], [3, 11], [3, 14], [5, 17], [5, 14], [5, 11], [7, 10], [7, 13], [7, 16]]
+timestep_ranges = [[5, 14]]
 
 # FLUX Model class
 class FLUXModel:
@@ -33,11 +45,11 @@ class FLUXModel:
         self.pipe =  AttentionFluxPipeline.from_pretrained(self.model_name, transformer=self.transformer, torch_dtype=torch.float16).to(self.device)
         return self.pipe
 
-    def get_images(self, pipe, prompt, seed, n_steps, guidance_scale, height, width, prompt_length, perform_sdsa):
+    def get_images(self, pipe, prompt, seed, n_steps, guidance_scale, height, width, prompt_length, perform_sdsa, timestep_start_range, timestep_end_range, layers_extended_config):
         query_store_kwargs = {'t_range': [0, n_steps // 10], 'strength_start': 0.9, 'strength_end': 0.81836735}
 
         if perform_sdsa:
-            extended_attn_kwargs = {'t_range': [(5, n_steps - 10)]}
+            extended_attn_kwargs = {'t_range': [(timestep_start_range, timestep_end_range)]}
         else:
             extended_attn_kwargs = {'t_range': []}
         print(extended_attn_kwargs['t_range'])
@@ -46,6 +58,7 @@ class FLUXModel:
             generator=torch.Generator(self.device).manual_seed(seed),
             extended_attn_kwargs=extended_attn_kwargs,
             query_store_kwargs=query_store_kwargs,
+            layers_extended_config=layers_extended_config,
             num_inference_steps=n_steps,
             guidance_scale=guidance_scale,
             height=height,
@@ -79,10 +92,7 @@ def show_distribution(pipe, prompt):
     print(f"Plot saved to {output_path}")
     # plt.show()
 
-def show_image(img, prompt):
-    output_path = prompt + ".png"
-    img.save(output_path)
-    print(f"Image saved to {output_path}")
+
 
 
 
@@ -109,22 +119,32 @@ def create_anchor_mapping(bsz, anchor_indices=[0]):
 
 
 
-def test_model():
+def test_model(args):
     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
     pipe = flux_model.get_pipe()
-    images = flux_model.get_images(
-        pipe=pipe,
-        prompt=prompts,
-        seed=2,
-        n_steps=30,
-        guidance_scale=3.5,
-        height=1024,
-        width=1024,
-        prompt_length=PROMPT_LEN,
-        perform_sdsa = True
-    )
-    for i in range(len(images)):
-        show_image(images[i], prompts[i])
+    for timestep_start, timestep_end in timestep_ranges:
+        images = flux_model.get_images(
+            pipe=pipe,
+            prompt=prompts,
+            seed=2,
+            n_steps=30,
+            guidance_scale=3.5,
+            height=1024,
+            width=1024,
+            prompt_length=PROMPT_LEN,
+            perform_sdsa = True,
+            timestep_start_range=timestep_start,
+            timestep_end_range=timestep_end,
+            layers_extended_config=args.layers_extended_config
+        )
+        for i in range(len(images)):
+            prompt = prompts[i]
+            img = images[i]
+            prompt = prompt.replace(" ", "_")
+            output_path = prompt + "_timestep_" + str(timestep_start) + "_" + str(timestep_end) + "_layers_config_" + str(args.layers_extended_config) + ".png"
+            img.save(output_path)
+            print(f"Image saved to {output_path}")
+
 
     # show_heatmap(pipe, img, prompt)
     # show_distribution(pipe, prompt)
@@ -154,6 +174,21 @@ def run_batch(seed=40, mask_dropout=0.5, style="A photo of ", subject="a cute do
     images, image_all = run_batch_generation(flux_model, prompts, concept_token, seed, mask_dropout=mask_dropout)
     return None, None
 
+
+def read_prompts():
+    with open(prompts_path, "r", encoding="utf-8") as file:
+        data = yaml.safe_load(file)
+    prompts = []
+    for category, items in data.items():
+        print(f"\nCategory: {category}")
+        for item in items:
+            print(f"  Subject: {item['subject']}")
+            for prompt in item["prompts"]:
+                print(f"    - {prompt}")
+                prompts.append((category, item['subject'], prompt))
+    return prompts
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--run_type', default="batch", type=str, required=False)  # batch, cached
@@ -167,6 +202,9 @@ if __name__ == '__main__':
     parser.add_argument('--settings', default=["sitting on the bed", "sitting in the beach", "sitting on the desk"], type=str, nargs='*', required=False)
     parser.add_argument('--cache_cpu_offloading', default=False, type=bool, required=False)
     parser.add_argument('--out_dir', default="output_images", type=str, required=False)
+    parser.add_argument('--layers_extended_config', default=0, type=int, required=False)
     args = parser.parse_args()
 
-    test_model()
+    # prompts = read_prompts()[:5]
+    # prompts = [prompt for _, _, prompt in prompts]
+    test_model(args)
