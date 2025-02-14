@@ -20,8 +20,65 @@ access_token_write = "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"
 login(token=access_token_write)
 PROMPT_LEN = 77
 prompts_path = 'prompts_benchmark/prompts.yaml'
-prompts = ["a photo of an astronaut riding a horse on mars", "a photo of an astronaut sitting with a pina colada cocktail in the beach of Thiland", "a photo of an astronaut landing on mars", "a photo of an astronaut leaving the earth", "a photo of an astronaut with a cat on mars"]
-prompts = ["A photo of An athletic woman, lifting weights", "A photo of An athletic woman, at a sports stadium", "A photo of An athletic woman, wearing a tracksuit", "A photo of An athletic woman, dressed in a ballet outfit", "A photo of An athletic woman, wearing hiking attire"]
+# prompts = ["a photo of an astronaut riding a horse on mars", "a photo of an astronaut sitting with a pina colada cocktail in the beach of Thiland", "a photo of an astronaut landing on mars", "a photo of an astronaut leaving the earth", "a photo of an astronaut with a cat on mars"]
+# prompts = ["A photo of An athletic woman, lifting weights", "A photo of An athletic woman, at a sports stadium", "A photo of An athletic woman, wearing a tracksuit", "A photo of An athletic woman, dressed in a ballet outfit", "A photo of An athletic woman, wearing hiking attire"]
+
+
+prompts1 =  [
+                "A fairy, in a mystical glen",
+                "A fairy, dressed in a petal gown",
+                "A fairy, inside a hollowed-out tree",
+                "A fairy, collecting morning dew",
+                "A fairy, under a full moon"
+            ]
+prompts2 = [
+                "A photo of A happy hedgehog, eating a big piece of cheese",
+                "A photo of A happy hedgehog, in a garden",
+                "A photo of A happy hedgehog, being held by a caretaker",
+                "A photo of A happy hedgehog, dressed in a festive outfit",
+                "A photo of A happy hedgehog, in an autumn forest"
+            ]
+
+prompts3 = [
+                "A photo of A dog, chasing a frisbee",
+                "A photo of A dog, on a beach",
+                "A photo of A dog, sleeping on a porch",
+                "A photo of A dog, dressed in a superhero cape",
+                "A photo of A dog, sitting by a fireplace"
+            ]
+
+prompts4 = [
+                "A watercolor illustration of A puppy, wearing a small sweater",
+                "A watercolor illustration of A puppy, digging a hole",
+                "A watercolor illustration of A puppy, wearing a training harness",
+                "A watercolor illustration of A puppy, sticking head out of the car window",
+                "A watercolor illustration of A puppy, swimming"
+            ]
+
+prompts5 = ["neonpunk style of A parrot, in a tropical rainforest",
+"neonpunk style of A parrot, dressed in a colorful necklace",
+"neonpunk style of A parrot, interacting with a mirror",
+"neonpunk style of A parrot, sitting on a pirate's shoulder",
+"neonpunk style of A parrot, in a jungle"]
+
+
+prompts6 = [
+                "A hyper-realistic digital painting of A middle-aged man, wearing a business suit",
+                "A hyper-realistic digital painting of A middle-aged man, at a traditional Japanese garden",
+                "A hyper-realistic digital painting of A middle-aged man, in a mountain cabin",
+                "A hyper-realistic digital painting of A middle-aged man, walking a dog",
+                "A hyper-realistic digital painting of A middle-aged man, wearing a tuxedo"
+            ]
+
+prompts7 = [
+                "origami style of A dragon, atop an ancient castle",
+                "origami style of A dragon, breathing a plume of fire",
+                "origami style of A dragon, coiling around its hoard",
+                "origami style of A dragon, guarding a treasure trove",
+                "origami style of A dragon, resting in a cavern"
+            ]
+
+prompts = [prompts1, prompts2, prompts3, prompts4, prompts5, prompts6, prompts7]
 
 
 
@@ -29,7 +86,11 @@ prompts = ["A photo of An athletic woman, lifting weights", "A photo of An athle
 # end range should be at most 17
 
 timestep_ranges = [[3, 8], [3, 11], [3, 14], [5, 17], [5, 14], [5, 11], [7, 10], [7, 13], [7, 16]]
-timestep_ranges = [[5, 14]]
+timestep_ranges = [[5, 15]]
+
+
+layers_config = ["none", "single_even", "multi", "single", "quarter1", "quarter2", "quarter3", "quarter4", "mix", "multi_even"]
+
 
 # FLUX Model class
 class FLUXModel:
@@ -122,28 +183,33 @@ def create_anchor_mapping(bsz, anchor_indices=[0]):
 def test_model(args):
     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
     pipe = flux_model.get_pipe()
+    layers_extended_config = args.layers_extended_config
     for timestep_start, timestep_end in timestep_ranges:
-        images = flux_model.get_images(
-            pipe=pipe,
-            prompt=prompts,
-            seed=2,
-            n_steps=30,
-            guidance_scale=3.5,
-            height=1024,
-            width=1024,
-            prompt_length=PROMPT_LEN,
-            perform_sdsa = True,
-            timestep_start_range=timestep_start,
-            timestep_end_range=timestep_end,
-            layers_extended_config=args.layers_extended_config
-        )
-        for i in range(len(images)):
-            prompt = prompts[i]
-            img = images[i]
-            prompt = prompt.replace(" ", "_")
-            output_path = prompt + "_timestep_" + str(timestep_start) + "_" + str(timestep_end) + "_layers_config_" + str(args.layers_extended_config) + ".png"
-            img.save(output_path)
-            print(f"Image saved to {output_path}")
+        for prompts_in_batch in prompts:
+            for layer_conf in layers_config:
+                images = flux_model.get_images(
+                    pipe=pipe,
+                    prompt=prompts_in_batch,
+                    seed=2,
+                    n_steps=30,
+                    guidance_scale=3.5,
+                    height=1024,
+                    width=1024,
+                    prompt_length=PROMPT_LEN,
+                    perform_sdsa = True,
+                    timestep_start_range=timestep_start,
+                    timestep_end_range=timestep_end,
+                    layers_extended_config=layer_conf
+                )
+                for i in range(len(images)):
+                    prompt = prompts_in_batch[i]
+                    img = images[i]
+                    prompt = prompt.replace(" ", "_")
+                    output_path = f"{prompt}_timestep_{timestep_start}_{timestep_end}_layers_config_{layer_conf}.png"
+                    img.save(output_path)
+                    print(f"Image saved to {output_path}")
+
+
 
 
     # show_heatmap(pipe, img, prompt)
@@ -202,7 +268,7 @@ if __name__ == '__main__':
     parser.add_argument('--settings', default=["sitting on the bed", "sitting in the beach", "sitting on the desk"], type=str, nargs='*', required=False)
     parser.add_argument('--cache_cpu_offloading', default=False, type=bool, required=False)
     parser.add_argument('--out_dir', default="output_images", type=str, required=False)
-    parser.add_argument('--layers_extended_config', default=0, type=int, required=False)
+    parser.add_argument('--layers_extended_config', default="multi_even", type=str, required=False)
     args = parser.parse_args()
 
     # prompts = read_prompts()[:5]

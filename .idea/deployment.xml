@@ -80,6 +80,13 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="orens@firefoot-01.cs.huji.ac.il:22 agent">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/cs/labs/dshahaf/orens/diffusers_attention" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="orens@firefoot-01.cs.huji.ac.il:22 password">
         <serverdata>
           <mappings>

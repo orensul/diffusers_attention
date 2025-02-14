@@ -8,27 +8,19 @@ from FLUX.attention_processor import ExtendedFluxAttnProcessor2_0, ExtendedFluxS
 from FLUX.attention_store import AttentionStore
 
 def register_my_attention_processors(transformer, attention_store, extended_attn_kwargs, layers_extended_config):
-    """
-
-    :param transformer:
-    :param attention_store:
-    :param extended_attn_kwargs:
-    :param layers_extended_config: 0 (only even layers), 1 (transformer_blocks), 2 (single_transformer_blocks), 3 (first half of multi blocks), 4 (second half of multi blocks), 5 (first half of single blocks), 6 (second half of single blocks)
-    :return:
-    """
     attn_procs = {}
     
     for i, (name, processor) in enumerate(transformer.attn_processors.items()):
         layer_name = ".".join(name.split(".")[:2])
 
         if layer_name.startswith("transformer_blocks"):
-            if (layers_extended_config == 0 and i % 2 == 0) or layers_extended_config == 1:
+            if (layers_extended_config == "multi_even" and i % 2 == 0) or layers_extended_config == "multi" or (layers_extended_config == "quarter1" and i <= 9) or (layers_extended_config == "quarter2" and i > 9 <= 18) or (layers_extended_config == "mix" and i > 11):
                 attn_procs[name] = ExtendedFluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
             else:
                 attn_procs[name] = FluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
 
         elif layer_name.startswith("single_transformer_blocks"):
-            if layers_extended_config == 2:
+            if (layers_extended_config == "single_even" and i % 2 == 0) or layers_extended_config == "single" or (layers_extended_config == "quarter3" and i <= 38) or (layers_extended_config == "quarter4" and i > 38) or (layers_extended_config == "mix" and i > 49):
                 attn_procs[name] = ExtendedFluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
             else:
                 attn_procs[name] = FluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)

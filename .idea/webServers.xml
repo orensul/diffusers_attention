@@ -37,6 +37,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="bd7466c6-b16e-4cf6-abf0-0b17b05ed967" name="firefoot-01.cs.huji.ac.il">
+        <fileTransfer accessType="SFTP" host="firefoot-01.cs.huji.ac.il" port="22" sshConfigId="35d0f730-ad90-4296-93a7-58fd306a5c00" sshConfig="orens@firefoot-01.cs.huji.ac.il:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>
