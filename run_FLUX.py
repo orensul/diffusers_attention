@@ -128,59 +128,60 @@ class FLUXModel:
         ).images
 
 
-def show_heatmap(pipe, image, prompt):
-    agg_attn = pipe.attention_store.aggregate_attention().float().cpu()
-    tokens_text = [pipe.tokenizer_2.decode(x) for x in pipe.tokenizer_2(prompt, padding="max_length", return_tensors="pt").input_ids[0]]
-    tokens_text = [f"{x}_{i}" for i, x in enumerate(tokens_text)]
-    idx_range = (0, 20)
-    visualize_tokens_attentions(agg_attn[0, idx_range[0]:idx_range[1]], tokens_text[idx_range[0]:idx_range[1]], image, prompt, heatmap_interpolation="bilinear")
-
-def show_distribution(pipe, prompt):
-    agg_attn = pipe.attention_store.aggregate_attention().float().cpu()
-    print(agg_attn.shape)
-    sum_attn_per_token = agg_attn.view(PROMPT_LEN, -1).mean(dim=1).cpu()
-    sum_attn_per_token = sum_attn_per_token / sum_attn_per_token.sum()
-    tokens_text = [pipe.tokenizer_2.decode(x) for x in pipe.tokenizer_2(prompt, padding="max_length", return_tensors="pt").input_ids[0]][:PROMPT_LEN]
-
-    # Show a bar plot of the attention per token
-    attn_per_token = {f'{t}_{i}': sum_attn_per_token[i] for i, t in enumerate(tokens_text)}
-
-    plt.figure(figsize=(100, 30))
-    plt.bar(attn_per_token.keys(), attn_per_token.values())
-    plt.xticks(rotation=90)
-    output_path = prompt + "_distribution.png"
-    plt.savefig(output_path, bbox_inches="tight")
-    print(f"Plot saved to {output_path}")
-    # plt.show()
+# def show_heatmap(pipe, image, prompt):
+#     agg_attn = pipe.attention_store.aggregate_attention().float().cpu()
+#     tokens_text = [pipe.tokenizer_2.decode(x) for x in pipe.tokenizer_2(prompt, padding="max_length", return_tensors="pt").input_ids[0]]
+#     tokens_text = [f"{x}_{i}" for i, x in enumerate(tokens_text)]
+#     idx_range = (0, 20)
+#     visualize_tokens_attentions(agg_attn[0, idx_range[0]:idx_range[1]], tokens_text[idx_range[0]:idx_range[1]], image, prompt, heatmap_interpolation="bilinear")
 
 
-
-
-
-def create_token_indices(prompts, batch_size, concept_token, tokenizer):
-    if isinstance(concept_token, str):
-        concept_token = [concept_token]
-
-    concept_token_id = [tokenizer.encode(x, add_special_tokens=False)[0] for x in concept_token]
-    tokens = tokenizer.batch_encode_plus(prompts, padding=True, return_tensors='pt')['input_ids']
-
-    token_indices = torch.full((len(concept_token), batch_size), -1, dtype=torch.int64)
-    for i, token_id in enumerate(concept_token_id):
-        batch_loc, token_loc = torch.where(tokens == token_id)
-        token_indices[i, batch_loc] = token_loc
-
-    return token_indices
-
-def create_anchor_mapping(bsz, anchor_indices=[0]):
-    anchor_mapping = torch.eye(bsz, dtype=torch.bool)
-    for anchor_idx in anchor_indices:
-        anchor_mapping[:, anchor_idx] = True
-
-    return anchor_mapping
+# def show_distribution(pipe, prompt):
+#     agg_attn = pipe.attention_store.aggregate_attention().float().cpu()
+#     print(agg_attn.shape)
+#     sum_attn_per_token = agg_attn.view(PROMPT_LEN, -1).mean(dim=1).cpu()
+#     sum_attn_per_token = sum_attn_per_token / sum_attn_per_token.sum()
+#     tokens_text = [pipe.tokenizer_2.decode(x) for x in pipe.tokenizer_2(prompt, padding="max_length", return_tensors="pt").input_ids[0]][:PROMPT_LEN]
+#
+#     # Show a bar plot of the attention per token
+#     attn_per_token = {f'{t}_{i}': sum_attn_per_token[i] for i, t in enumerate(tokens_text)}
+#
+#     plt.figure(figsize=(100, 30))
+#     plt.bar(attn_per_token.keys(), attn_per_token.values())
+#     plt.xticks(rotation=90)
+#     output_path = prompt + "_distribution.png"
+#     plt.savefig(output_path, bbox_inches="tight")
+#     print(f"Plot saved to {output_path}")
+#     # plt.show()
 
 
 
-def test_model(args):
+
+
+# def create_token_indices(prompts, batch_size, concept_token, tokenizer):
+#     if isinstance(concept_token, str):
+#         concept_token = [concept_token]
+#
+#     concept_token_id = [tokenizer.encode(x, add_special_tokens=False)[0] for x in concept_token]
+#     tokens = tokenizer.batch_encode_plus(prompts, padding=True, return_tensors='pt')['input_ids']
+#
+#     token_indices = torch.full((len(concept_token), batch_size), -1, dtype=torch.int64)
+#     for i, token_id in enumerate(concept_token_id):
+#         batch_loc, token_loc = torch.where(tokens == token_id)
+#         token_indices[i, batch_loc] = token_loc
+#
+#     return token_indices
+#
+# def create_anchor_mapping(bsz, anchor_indices=[0]):
+#     anchor_mapping = torch.eye(bsz, dtype=torch.bool)
+#     for anchor_idx in anchor_indices:
+#         anchor_mapping[:, anchor_idx] = True
+#
+#     return anchor_mapping
+
+
+
+def test_model():
     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
     pipe = flux_model.get_pipe()
     for timestep_start, timestep_end in timestep_ranges:
@@ -215,29 +216,29 @@ def test_model(args):
     # show_distribution(pipe, prompt)
 
 
-def run_batch_generation(model, prompts, concept_token, seed=40, n_steps=50, mask_dropout=0.5, share_queries=True, perform_sdsa=True, downscale_rate=4, n_anchors=2):
-    pipe = model.get_pipe()
-    device = model.get_device()
-    tokenizer = pipe.tokenizer_2
-    float_type = pipe.dtype
+# def run_batch_generation(model, prompts, concept_token, seed=40, n_steps=50, mask_dropout=0.5, share_queries=True, perform_sdsa=True, downscale_rate=4, n_anchors=2):
+#     pipe = model.get_pipe()
+#     device = model.get_device()
+#     tokenizer = pipe.tokenizer_2
+#     float_type = pipe.dtype
+#
+#     batch_size = len(prompts)
+#
+#     token_indices = create_token_indices(prompts, batch_size, concept_token, tokenizer)
+#     anchor_mappings = create_anchor_mapping(batch_size, anchor_indices=list(range(n_anchors)))
+#
+#     default_attention_store_kwargs = {'token_indices': token_indices, 'mask_dropout': mask_dropout, 'extended_mapping': anchor_mappings}
+#
+#
+#     return None, None
 
-    batch_size = len(prompts)
-
-    token_indices = create_token_indices(prompts, batch_size, concept_token, tokenizer)
-    anchor_mappings = create_anchor_mapping(batch_size, anchor_indices=list(range(n_anchors)))
-
-    default_attention_store_kwargs = {'token_indices': token_indices, 'mask_dropout': mask_dropout, 'extended_mapping': anchor_mappings}
 
 
-    return None, None
-
-
-
-def run_batch(seed=40, mask_dropout=0.5, style="A photo of ", subject="a cute dog", concept_token=['dog'], settings=["sitting in the beach", "standing in the snow"], out_dir=None):
-    flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
-    prompts = [f'{style}{subject} {setting}' for setting in settings]
-    images, image_all = run_batch_generation(flux_model, prompts, concept_token, seed, mask_dropout=mask_dropout)
-    return None, None
+# def run_batch(seed=40, mask_dropout=0.5, style="A photo of ", subject="a cute dog", concept_token=['dog'], settings=["sitting in the beach", "standing in the snow"], out_dir=None):
+#     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
+#     prompts = [f'{style}{subject} {setting}' for setting in settings]
+#     images, image_all = run_batch_generation(flux_model, prompts, concept_token, seed, mask_dropout=mask_dropout)
+#     return None, None
 
 
 def read_prompts():
@@ -271,4 +272,4 @@ if __name__ == '__main__':
 
     # prompts = read_prompts()[:5]
     # prompts = [prompt for _, _, prompt in prompts]
-    test_model(args)
+    test_model()
