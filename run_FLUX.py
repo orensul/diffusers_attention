@@ -183,7 +183,6 @@ def create_anchor_mapping(bsz, anchor_indices=[0]):
 def test_model(args):
     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
     pipe = flux_model.get_pipe()
-    layers_extended_config = args.layers_extended_config
     for timestep_start, timestep_end in timestep_ranges:
         for prompts_in_batch in prompts:
             for layer_conf in layers_config:
@@ -268,7 +267,6 @@ if __name__ == '__main__':
     parser.add_argument('--settings', default=["sitting on the bed", "sitting in the beach", "sitting on the desk"], type=str, nargs='*', required=False)
     parser.add_argument('--cache_cpu_offloading', default=False, type=bool, required=False)
     parser.add_argument('--out_dir', default="output_images", type=str, required=False)
-    parser.add_argument('--layers_extended_config', default="multi_even", type=str, required=False)
     args = parser.parse_args()
 
     # prompts = read_prompts()[:5]
