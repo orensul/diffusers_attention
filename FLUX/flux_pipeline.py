@@ -7,25 +7,73 @@ from diffusers.pipelines.flux.pipeline_output import FluxPipelineOutput
 from FLUX.attention_processor import ExtendedFluxAttnProcessor2_0, ExtendedFluxSingleAttnProcessor2_0, FluxAttnProcessor2_0, FluxSingleAttnProcessor2_0
 from FLUX.attention_store import AttentionStore
 
+# def register_my_attention_processors(transformer, attention_store, extended_attn_kwargs, layers_extended_config):
+#     attn_procs = {}
+#
+#     for i, (name, processor) in enumerate(transformer.attn_processors.items()):
+#         layer_name = ".".join(name.split(".")[:2])
+#
+#         if layer_name.startswith("transformer_blocks"):
+#             if (layers_extended_config == "multi_even" and i % 2 == 0) or layers_extended_config == "multi" or (layers_extended_config == "quarter1" and i <= 9) or (layers_extended_config == "quarter2" and i > 9 <= 18) or (layers_extended_config == "mix" and i > 11):
+#                 attn_procs[name] = ExtendedFluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
+#             else:
+#                 attn_procs[name] = FluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
+#
+#         elif layer_name.startswith("single_transformer_blocks"):
+#             if (layers_extended_config == "single_even" and i % 2 == 0) or layers_extended_config == "single" or (layers_extended_config == "quarter3" and i <= 38) or (layers_extended_config == "quarter4" and i > 38) or (layers_extended_config == "mix" and i > 49):
+#                 attn_procs[name] = ExtendedFluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
+#             else:
+#                 attn_procs[name] = FluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
+#
+#     transformer.set_attn_processor(attn_procs)
+
 def register_my_attention_processors(transformer, attention_store, extended_attn_kwargs, layers_extended_config):
     attn_procs = {}
-    
+
+    multi_transformer_conditions = {
+        "multi_even": lambda i: i % 2 == 0,
+        "multi": lambda i: True,
+        "quarter1": lambda i: i <= 9,
+        "quarter2": lambda i: 9 < i <= 18,
+        "mix": lambda i: 11 < i <= 18,
+    }
+
+    single_transformer_conditions = {
+        "single_even": lambda i: i % 2 == 0,
+        "single": lambda i: True,
+        "quarter3": lambda i: 19 <= i <= 38,
+        "quarter4": lambda i: i > 38,
+        "mix": lambda i: 19 <= i <= 25,
+    }
+
+    def get_processor(layer_type, i):
+        """Determine which processor to use based on layer type and index."""
+        if layer_type == "transformer_blocks":
+            condition = multi_transformer_conditions.get(layers_extended_config, lambda _: False)
+            return (
+                ExtendedFluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
+                if condition(i)
+                else FluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
+            )
+        elif layer_type == "single_transformer_blocks":
+            condition = single_transformer_conditions.get(layers_extended_config, lambda _: False)
+            return (
+                ExtendedFluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
+                if condition(i)
+                else FluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
+            )
+        return None
+
+    # Iterate over transformer attention processors
     for i, (name, processor) in enumerate(transformer.attn_processors.items()):
-        layer_name = ".".join(name.split(".")[:2])
+        layer_type = name.split(".")[0]  # Extract main layer type
 
-        if layer_name.startswith("transformer_blocks"):
-            if (layers_extended_config == "multi_even" and i % 2 == 0) or layers_extended_config == "multi" or (layers_extended_config == "quarter1" and i <= 9) or (layers_extended_config == "quarter2" and i > 9 <= 18) or (layers_extended_config == "mix" and i > 11):
-                attn_procs[name] = ExtendedFluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
-            else:
-                attn_procs[name] = FluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
-
-        elif layer_name.startswith("single_transformer_blocks"):
-            if (layers_extended_config == "single_even" and i % 2 == 0) or layers_extended_config == "single" or (layers_extended_config == "quarter3" and i <= 38) or (layers_extended_config == "quarter4" and i > 38) or (layers_extended_config == "mix" and i > 49):
-                attn_procs[name] = ExtendedFluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
-            else:
-                attn_procs[name] = FluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
+        if layer_type in ["transformer_blocks", "single_transformer_blocks"]:
+            attn_procs[name] = get_processor(layer_type, i)
 
     transformer.set_attn_processor(attn_procs)
+
+
 
 class AttentionFluxPipeline(FluxPipeline):
     @torch.no_grad()
@@ -50,7 +98,6 @@ class AttentionFluxPipeline(FluxPipeline):
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
         max_sequence_length: int = 512,
         extended_attn_kwargs: Optional[Dict] = None,
-        query_store_kwargs: Optional[Dict] = {},
         layers_extended_config: int = 0,
 
     ):

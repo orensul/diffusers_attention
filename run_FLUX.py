@@ -107,18 +107,15 @@ class FLUXModel:
         return self.pipe
 
     def get_images(self, pipe, prompt, seed, n_steps, guidance_scale, height, width, prompt_length, perform_sdsa, timestep_start_range, timestep_end_range, layers_extended_config):
-        query_store_kwargs = {'t_range': [0, n_steps // 10], 'strength_start': 0.9, 'strength_end': 0.81836735}
-
         if perform_sdsa:
             extended_attn_kwargs = {'t_range': [(timestep_start_range, timestep_end_range)]}
         else:
             extended_attn_kwargs = {'t_range': []}
-        print(extended_attn_kwargs['t_range'])
+
         return pipe(
             prompt=prompt,
             generator=torch.Generator(self.device).manual_seed(seed),
             extended_attn_kwargs=extended_attn_kwargs,
-            query_store_kwargs=query_store_kwargs,
             layers_extended_config=layers_extended_config,
             num_inference_steps=n_steps,
             guidance_scale=guidance_scale,
@@ -126,6 +123,83 @@ class FLUXModel:
             width=width,
             max_sequence_length=prompt_length,
         ).images
+
+
+def test_model():
+    flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
+    pipe = flux_model.get_pipe()
+    for timestep_start, timestep_end in timestep_ranges:
+        for prompts_in_batch in prompts:
+            for layer_conf in layers_config:
+                images = flux_model.get_images(
+                    pipe=pipe,
+                    prompt=prompts_in_batch,
+                    seed=2,
+                    n_steps=30,
+                    guidance_scale=3.5,
+                    height=1024,
+                    width=1024,
+                    prompt_length=PROMPT_LEN,
+                    perform_sdsa = True,
+                    timestep_start_range=timestep_start,
+                    timestep_end_range=timestep_end,
+                    layers_extended_config=layer_conf
+                )
+                for i in range(len(images)):
+                    prompt = prompts_in_batch[i]
+                    img = images[i]
+                    prompt = prompt.replace(" ", "_")
+                    output_path = f"{prompt}_timestep_{timestep_start}_{timestep_end}_layers_config_{layer_conf}.png"
+                    img.save(output_path)
+                    print(f"Image saved to {output_path}")
+
+
+
+
+    # show_heatmap(pipe, img, prompt)
+    # show_distribution(pipe, prompt)
+
+
+
+def read_prompts():
+    with open(prompts_path, "r", encoding="utf-8") as file:
+        data = yaml.safe_load(file)
+    prompts = []
+    for category, items in data.items():
+        print(f"\nCategory: {category}")
+        for item in items:
+            print(f"  Subject: {item['subject']}")
+            for prompt in item["prompts"]:
+                print(f"    - {prompt}")
+                prompts.append((category, item['subject'], prompt))
+    return prompts
+
+
+
+# def run_batch_generation(model, prompts, concept_token, seed=40, n_steps=50, mask_dropout=0.5, share_queries=True, perform_sdsa=True, downscale_rate=4, n_anchors=2):
+#     pipe = model.get_pipe()
+#     device = model.get_device()
+#     tokenizer = pipe.tokenizer_2
+#     float_type = pipe.dtype
+#
+#     batch_size = len(prompts)
+#
+#     token_indices = create_token_indices(prompts, batch_size, concept_token, tokenizer)
+#     anchor_mappings = create_anchor_mapping(batch_size, anchor_indices=list(range(n_anchors)))
+#
+#     default_attention_store_kwargs = {'token_indices': token_indices, 'mask_dropout': mask_dropout, 'extended_mapping': anchor_mappings}
+#
+#
+#     return None, None
+
+
+
+# def run_batch(seed=40, mask_dropout=0.5, style="A photo of ", subject="a cute dog", concept_token=['dog'], settings=["sitting in the beach", "standing in the snow"], out_dir=None):
+#     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
+#     prompts = [f'{style}{subject} {setting}' for setting in settings]
+#     images, image_all = run_batch_generation(flux_model, prompts, concept_token, seed, mask_dropout=mask_dropout)
+#     return None, None
+
 
 
 # def show_heatmap(pipe, image, prompt):
@@ -181,78 +255,6 @@ class FLUXModel:
 
 
 
-def test_model():
-    flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
-    pipe = flux_model.get_pipe()
-    for timestep_start, timestep_end in timestep_ranges:
-        for prompts_in_batch in prompts:
-            for layer_conf in layers_config:
-                images = flux_model.get_images(
-                    pipe=pipe,
-                    prompt=prompts_in_batch,
-                    seed=2,
-                    n_steps=30,
-                    guidance_scale=3.5,
-                    height=1024,
-                    width=1024,
-                    prompt_length=PROMPT_LEN,
-                    perform_sdsa = True,
-                    timestep_start_range=timestep_start,
-                    timestep_end_range=timestep_end,
-                    layers_extended_config=layer_conf
-                )
-                for i in range(len(images)):
-                    prompt = prompts_in_batch[i]
-                    img = images[i]
-                    prompt = prompt.replace(" ", "_")
-                    output_path = f"{prompt}_timestep_{timestep_start}_{timestep_end}_layers_config_{layer_conf}.png"
-                    img.save(output_path)
-                    print(f"Image saved to {output_path}")
-
-
-
-
-    # show_heatmap(pipe, img, prompt)
-    # show_distribution(pipe, prompt)
-
-
-# def run_batch_generation(model, prompts, concept_token, seed=40, n_steps=50, mask_dropout=0.5, share_queries=True, perform_sdsa=True, downscale_rate=4, n_anchors=2):
-#     pipe = model.get_pipe()
-#     device = model.get_device()
-#     tokenizer = pipe.tokenizer_2
-#     float_type = pipe.dtype
-#
-#     batch_size = len(prompts)
-#
-#     token_indices = create_token_indices(prompts, batch_size, concept_token, tokenizer)
-#     anchor_mappings = create_anchor_mapping(batch_size, anchor_indices=list(range(n_anchors)))
-#
-#     default_attention_store_kwargs = {'token_indices': token_indices, 'mask_dropout': mask_dropout, 'extended_mapping': anchor_mappings}
-#
-#
-#     return None, None
-
-
-
-# def run_batch(seed=40, mask_dropout=0.5, style="A photo of ", subject="a cute dog", concept_token=['dog'], settings=["sitting in the beach", "standing in the snow"], out_dir=None):
-#     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
-#     prompts = [f'{style}{subject} {setting}' for setting in settings]
-#     images, image_all = run_batch_generation(flux_model, prompts, concept_token, seed, mask_dropout=mask_dropout)
-#     return None, None
-
-
-def read_prompts():
-    with open(prompts_path, "r", encoding="utf-8") as file:
-        data = yaml.safe_load(file)
-    prompts = []
-    for category, items in data.items():
-        print(f"\nCategory: {category}")
-        for item in items:
-            print(f"  Subject: {item['subject']}")
-            for prompt in item["prompts"]:
-                print(f"    - {prompt}")
-                prompts.append((category, item['subject'], prompt))
-    return prompts
 
 
 if __name__ == '__main__':
