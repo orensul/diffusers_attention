@@ -13,6 +13,15 @@ from visualization_utils import visualize_tokens_attentions
 from FLUX.flux_pipeline import AttentionFluxPipeline
 from FLUX.flux_transformer import FluxTransformer2DModel
 from huggingface_hub import login
+from datetime import datetime
+
+# Get today's date in YYYY-MM-DD format
+today_date = datetime.today().strftime('%Y-%m-%d')
+
+base_output_dir = "/cs/labs/dshahaf/orens/diffusers_attention/outputs"
+output_dir = os.path.join(base_output_dir, today_date)
+os.makedirs(output_dir, exist_ok=True)  # Ensure directory exists
+
 
 # Hugging Face access tokens
 access_token_read = "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"
@@ -145,11 +154,12 @@ def test_model():
                     timestep_end_range=timestep_end,
                     layers_extended_config=layer_conf
                 )
+                # Save images in the dated directory
                 for i in range(len(images)):
                     prompt = prompts_in_batch[i]
                     img = images[i]
                     prompt = prompt.replace(" ", "_")
-                    output_path = f"{prompt}_timestep_{timestep_start}_{timestep_end}_layers_config_{layer_conf}.png"
+                    output_path = os.path.join(output_dir, f"{prompt}_timestep_{timestep_start}_{timestep_end}_layers_config_{layer_conf}.png")
                     img.save(output_path)
                     print(f"Image saved to {output_path}")
 
