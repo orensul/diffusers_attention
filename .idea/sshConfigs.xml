@@ -4,7 +4,6 @@
     <configs>
       <sshConfig authType="PASSWORD" connectionConfig="{&quot;serverAliveInterval&quot;:300}" host="epona-01.cs.huji.ac.il" id="72955001-4cb3-41c3-affe-f63d3964dfc7" port="22" nameFormat="DESCRIPTIVE" username="orens" useOpenSSHConfig="true" />
       <sshConfig authType="PASSWORD" host="epona-02.cs.huji.ac.il" id="b82bd779-ecb7-482e-87ce-4c7275d24eb9" port="22" nameFormat="DESCRIPTIVE" username="orens" useOpenSSHConfig="true" />
-      <sshConfig authType="PASSWORD" host="firefoot-01.cs.huji.ac.il" id="35d0f730-ad90-4296-93a7-58fd306a5c00" port="22" nameFormat="DESCRIPTIVE" username="orens" useOpenSSHConfig="true" />
     </configs>
   </component>
 </project>

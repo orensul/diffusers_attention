@@ -27,29 +27,49 @@ from FLUX.attention_store import AttentionStore
 #
 #     transformer.set_attn_processor(attn_procs)
 
+import logging
+
+logging.basicConfig(
+    filename="processor_log.log",  # Log file name
+    level=logging.DEBUG,  # Log all messages at DEBUG level or higher
+    format="%(asctime)s - %(levelname)s - %(message)s"  # Format for log messages
+)
+
+logger = logging.getLogger(__name__)
+
 def register_my_attention_processors(transformer, attention_store, extended_attn_kwargs, layers_extended_config):
     attn_procs = {}
 
     multi_transformer_conditions = {
         "multi_even": lambda i: i % 2 == 0,
         "multi": lambda i: True,
-        "quarter1": lambda i: i <= 9,
-        "quarter2": lambda i: 9 < i <= 18,
+        "multi_first_half": lambda i: i <= 9,
+        "q1": lambda i: i < 14,
+        "multi_second_half": lambda i: 9 < i <= 18,
+        "q2": lambda i: 14 <= i <= 18,
         "mix": lambda i: 11 < i <= 18,
     }
 
     single_transformer_conditions = {
         "single_even": lambda i: i % 2 == 0,
         "single": lambda i: True,
-        "quarter3": lambda i: 19 <= i <= 38,
-        "quarter4": lambda i: i > 38,
+        "single_first_half": lambda i: 19 <= i <= 38,
+        "q2": lambda  i : 19 <= i < 29,
+        "q3": lambda  i : 29 <= i < 44,
+        "q4": lambda  i : 44 <= i <= 57,
+        "single_second_half": lambda i: i > 38,
         "mix": lambda i: 19 <= i <= 25,
     }
+
 
     def get_processor(layer_type, i):
         """Determine which processor to use based on layer type and index."""
         if layer_type == "transformer_blocks":
             condition = multi_transformer_conditions.get(layers_extended_config, lambda _: False)
+            logger.debug(f"Iteration: {i}")
+            logger.debug(f"Layer Type: {layer_type}")
+            logger.debug(f"Condition: {condition(i)}")
+
             return (
                 ExtendedFluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
                 if condition(i)
@@ -57,6 +77,9 @@ def register_my_attention_processors(transformer, attention_store, extended_attn
             )
         elif layer_type == "single_transformer_blocks":
             condition = single_transformer_conditions.get(layers_extended_config, lambda _: False)
+            logger.debug(f"Iteration: {i}")
+            logger.debug(f"Layer Type: {layer_type}")
+            logger.debug(f"Condition: {condition(i)}")
             return (
                 ExtendedFluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
                 if condition(i)
@@ -66,12 +89,19 @@ def register_my_attention_processors(transformer, attention_store, extended_attn
 
     # Iterate over transformer attention processors
     for i, (name, processor) in enumerate(transformer.attn_processors.items()):
+        logger.debug(f"Iteration: {i}")
+        logger.debug(f"Processor Name: {name}")
+
         layer_type = name.split(".")[0]  # Extract main layer type
+        logger.debug(f"Layer Type: {layer_type}")
+        logger.debug(f"Layer Name: {'.'.join(name.split('.')[:2])}")
 
         if layer_type in ["transformer_blocks", "single_transformer_blocks"]:
+            logger.debug("get_processor")
             attn_procs[name] = get_processor(layer_type, i)
 
     transformer.set_attn_processor(attn_procs)
+    logger.info("Transformer attention processors updated successfully.")
 
 
 

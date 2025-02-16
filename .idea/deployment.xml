@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="orens@epona-02.cs.huji.ac.il:22 agent (2)" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="orens@firefoot-02.cs.huji.ac.il:22 password" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
       <paths name="orens@binky-01.cs.huji.ac.il:22 password">
@@ -94,7 +94,7 @@
           </mappings>
         </serverdata>
       </paths>
-      <paths name="orens@firefoot-02.cs.huji.ac.il:22 agent">
+      <paths name="orens@firefoot-02.cs.huji.ac.il:22 password">
         <serverdata>
           <mappings>
             <mapping deploy="/cs/labs/dshahaf/orens/diffusers_attention" local="$PROJECT_DIR$" />

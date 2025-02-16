@@ -88,17 +88,15 @@ prompts7 = [
             ]
 
 prompts = [prompts1, prompts2, prompts3, prompts4, prompts5, prompts6, prompts7]
-
-
+prompts = [prompts1, prompts7]
 
 
 # end range should be at most 17
 
 timestep_ranges = [[3, 8], [3, 11], [3, 14], [5, 17], [5, 14], [5, 11], [7, 10], [7, 13], [7, 16]]
-timestep_ranges = [[5, 15]]
+timestep_ranges = [[5, 12], [5, 15], [5, 18]]
 
-
-layers_config = ["none", "single_even", "multi", "single", "quarter1", "quarter2", "quarter3", "quarter4", "mix", "multi_even"]
+layers_config = ["none",  "multi_even", "multi", "multi_first_half", "multi_second_half", "q1", "q2", "q3", "q4", "single_even", "single", "single_first_half", "single_second_half", "mix"]
 
 
 # FLUX Model class
