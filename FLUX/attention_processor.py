@@ -9,37 +9,40 @@ from packaging import version
 import torch
 from typing import Optional
 
+import torch
+import torch.nn.functional as F
 
 
-def apply_standard_attention(query, key, value, attn):
-    batch_size, attn_heads, _, head_dim = query.shape
 
-    query = query.reshape(batch_size*attn_heads, -1, head_dim)
-    key = key.reshape(batch_size*attn_heads, -1, head_dim)
-    value = value.reshape(batch_size*attn_heads, -1, head_dim)
-    
-    attention_probs = attn.get_attention_scores(query, key)
+# def apply_standard_attention(query, key, value, attn):
+#     batch_size, attn_heads, _, head_dim = query.shape
+#
+#     query = query.reshape(batch_size*attn_heads, -1, head_dim)
+#     key = key.reshape(batch_size*attn_heads, -1, head_dim)
+#     value = value.reshape(batch_size*attn_heads, -1, head_dim)
+#
+#     attention_probs = attn.get_attention_scores(query, key)
+#
+#     hidden_states = torch.bmm(attention_probs, value)
+#     hidden_states = hidden_states.view(batch_size, attn_heads, -1, head_dim)
+#
+#     return hidden_states, attention_probs
 
-    hidden_states = torch.bmm(attention_probs, value)
-    hidden_states = hidden_states.view(batch_size, attn_heads, -1, head_dim)
-    
-    return hidden_states, attention_probs
 
-
-def extended_self_attention(query, key, value):
-    batch_size, num_heads, seq_len, d_k = key.shape
-    # Concatenate keys and values across the batch dimension efficiently
-    extended_key = torch.cat([key[i] for i in range(batch_size)], dim=1).unsqueeze(0).expand(batch_size, -1, -1, -1)
-    extended_value = torch.cat([value[i] for i in range(batch_size)], dim=1).unsqueeze(0).expand(batch_size, -1, -1, -1)
-    # Compute extended self-attention
-    hidden_states = F.scaled_dot_product_attention(
-        query,
-        extended_key,
-        extended_value,
-        dropout_p=0.0,
-        is_causal=False
-    )
-    return hidden_states
+# def extended_self_attention(query, key, value):
+#     batch_size, num_heads, seq_len, d_k = key.shape
+#     # Concatenate keys and values across the batch dimension efficiently
+#     extended_key = torch.cat([key[i] for i in range(batch_size)], dim=1).unsqueeze(0).expand(batch_size, -1, -1, -1)
+#     extended_value = torch.cat([value[i] for i in range(batch_size)], dim=1).unsqueeze(0).expand(batch_size, -1, -1, -1)
+#     # Compute extended self-attention
+#     hidden_states = F.scaled_dot_product_attention(
+#         query,
+#         extended_key,
+#         extended_value,
+#         dropout_p=0.0,
+#         is_causal=False
+#     )
+#     return hidden_states
 
 
 
@@ -89,46 +92,43 @@ def extended_self_attention(query, key, value):
 #
 #     return hidden_states
 
-import torch
-import torch.nn.functional as F
 
 
-
-def extended_subject_attention(query, key, value, curr_step, t_range, text_token_count=77):
-    batch_size, heads, tokens, dim = query.shape
-    apply_extended = any(start <= curr_step <= end for start, end in t_range)
-
-    # Standard self-attention
-    hidden_states = F.scaled_dot_product_attention(query, key, value, dropout_p=0.0, is_causal=False)
-
-    if apply_extended:
-        image_key = key[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
-        image_value = value[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
-
-        # First two images (anchors) attend to themselves only
-        anchor_keys = image_key[:2]
-        anchor_values = image_value[:2]
-
-        # Non-anchor images should attend to themselves + the two anchors
-        non_anchor_keys = image_key[2:]
-        non_anchor_values = image_value[2:]
-
-        # Reshape anchors for broadcasting
-        anchor_keys_expanded = anchor_keys.permute(1, 0, 2, 3).reshape(heads, -1, dim)
-        anchor_values_expanded = anchor_values.permute(1, 0, 2, 3).reshape(heads, -1, dim)
-
-        # Expand for non-anchor images only
-        anchor_keys_expanded = anchor_keys_expanded.unsqueeze(0).expand(batch_size - 2, -1, -1, -1)
-        anchor_values_expanded = anchor_values_expanded.unsqueeze(0).expand(batch_size - 2, -1, -1, -1)
-
-        # Concatenate extended context only for non-anchor images
-        extended_key = torch.cat([key[2:, :, :text_token_count], non_anchor_keys, anchor_keys_expanded], dim=2)
-        extended_value = torch.cat([value[2:, :, :text_token_count], non_anchor_values, anchor_values_expanded], dim=2)
-
-        # Compute extended attention only for non-anchor images
-        hidden_states[2:] = F.scaled_dot_product_attention(query[2:], extended_key, extended_value, dropout_p=0.0, is_causal=False)
-
-    return hidden_states
+# def extended_subject_attention(query, key, value, curr_step, t_range, text_token_count=77):
+#     batch_size, heads, tokens, dim = query.shape
+#     apply_extended = any(start <= curr_step <= end for start, end in t_range)
+#
+#     # Standard self-attention
+#     hidden_states = F.scaled_dot_product_attention(query, key, value, dropout_p=0.0, is_causal=False)
+#
+#     if apply_extended:
+#         image_key = key[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
+#         image_value = value[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
+#
+#         # First two images (anchors) attend to themselves only
+#         anchor_keys = image_key[:2]
+#         anchor_values = image_value[:2]
+#
+#         # Non-anchor images should attend to themselves + the two anchors
+#         non_anchor_keys = image_key[2:]
+#         non_anchor_values = image_value[2:]
+#
+#         # Reshape anchors for broadcasting
+#         anchor_keys_expanded = anchor_keys.permute(1, 0, 2, 3).reshape(heads, -1, dim)
+#         anchor_values_expanded = anchor_values.permute(1, 0, 2, 3).reshape(heads, -1, dim)
+#
+#         # Expand for non-anchor images only
+#         anchor_keys_expanded = anchor_keys_expanded.unsqueeze(0).expand(batch_size - 2, -1, -1, -1)
+#         anchor_values_expanded = anchor_values_expanded.unsqueeze(0).expand(batch_size - 2, -1, -1, -1)
+#
+#         # Concatenate extended context only for non-anchor images
+#         extended_key = torch.cat([key[2:, :, :text_token_count], non_anchor_keys, anchor_keys_expanded], dim=2)
+#         extended_value = torch.cat([value[2:, :, :text_token_count], non_anchor_values, anchor_values_expanded], dim=2)
+#
+#         # Compute extended attention only for non-anchor images
+#         hidden_states[2:] = F.scaled_dot_product_attention(query[2:], extended_key, extended_value, dropout_p=0.0, is_causal=False)
+#
+#     return hidden_states
 
 
 def anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=77):
@@ -181,77 +181,77 @@ def anchored_attention_batch(query, key, value, curr_step, t_range, text_token_c
     return hidden_states
 
 
-def extended_attention_batch_n(query, key, value, curr_step, t_range, text_token_count=77):
-    """
-    Implements full subject-driven self-attention where image tokens are shared across all images in the batch.
+# def extended_attention_batch_n(query, key, value, curr_step, t_range, text_token_count=77):
+#     """
+#     Implements full subject-driven self-attention where image tokens are shared across all images in the batch.
+#
+#     Args:
+#         query (torch.Tensor): Query tensor of shape [batch, heads, tokens, dim].
+#         key (torch.Tensor): Key tensor of shape [batch, heads, tokens, dim].
+#         value (torch.Tensor): Value tensor of shape [batch, heads, tokens, dim].
+#         curr_step (int): The current step in the diffusion process.
+#         t_range (list of tuples): List of (start, end) step ranges where extended attention is applied.
+#         text_token_count (int): Number of text tokens before the image tokens start.
+#
+#     Returns:
+#         torch.Tensor: The hidden states after applying self-attention.
+#     """
+#     batch_size, heads, tokens, dim = query.shape
+#     apply_extended = any(start <= curr_step <= end for start, end in t_range)
+#
+#     # Compute standard self-attention for all images
+#     hidden_states = F.scaled_dot_product_attention(query, key, value, dropout_p=0.0, is_causal=False)
+#
+#     if apply_extended:
+#         # Extract only the image tokens (excluding text tokens) from all images
+#         image_key = key[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
+#         image_value = value[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
+#
+#         # **Fix: Reshape and correctly align batch dimensions**
+#         global_key = image_key.permute(1, 0, 2, 3).reshape(heads, -1, dim)  # Shape: [heads, batch * img_tokens, dim]
+#         global_value = image_value.permute(1, 0, 2, 3).reshape(heads, -1, dim)  # Shape: [heads, batch * img_tokens, dim]
+#
+#         # Expand to match batch size correctly
+#         global_key = global_key.unsqueeze(0).expand(batch_size, -1, -1, -1)  # Shape: [batch, heads, batch * img_tokens, dim]
+#         global_value = global_value.unsqueeze(0).expand(batch_size, -1, -1, -1)  # Shape: [batch, heads, batch * img_tokens, dim]
+#
+#         # Concatenate text tokens back with the global image token pool
+#         extended_key = torch.cat([key[:, :, :text_token_count], global_key], dim=2)  # Shape: [batch, heads, text_token_count + batch * img_tokens, dim]
+#         extended_value = torch.cat([value[:, :, :text_token_count], global_value], dim=2)  # Same shape
+#
+#         # Apply extended self-attention
+#         hidden_states = F.scaled_dot_product_attention(query, extended_key, extended_value, dropout_p=0.0, is_causal=False)
+#
+#     return hidden_states
 
-    Args:
-        query (torch.Tensor): Query tensor of shape [batch, heads, tokens, dim].
-        key (torch.Tensor): Key tensor of shape [batch, heads, tokens, dim].
-        value (torch.Tensor): Value tensor of shape [batch, heads, tokens, dim].
-        curr_step (int): The current step in the diffusion process.
-        t_range (list of tuples): List of (start, end) step ranges where extended attention is applied.
-        text_token_count (int): Number of text tokens before the image tokens start.
 
-    Returns:
-        torch.Tensor: The hidden states after applying self-attention.
-    """
-    batch_size, heads, tokens, dim = query.shape
-    apply_extended = any(start <= curr_step <= end for start, end in t_range)
-
-    # Compute standard self-attention for all images
-    hidden_states = F.scaled_dot_product_attention(query, key, value, dropout_p=0.0, is_causal=False)
-
-    if apply_extended:
-        # Extract only the image tokens (excluding text tokens) from all images
-        image_key = key[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
-        image_value = value[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
-
-        # **Fix: Reshape and correctly align batch dimensions**
-        global_key = image_key.permute(1, 0, 2, 3).reshape(heads, -1, dim)  # Shape: [heads, batch * img_tokens, dim]
-        global_value = image_value.permute(1, 0, 2, 3).reshape(heads, -1, dim)  # Shape: [heads, batch * img_tokens, dim]
-
-        # Expand to match batch size correctly
-        global_key = global_key.unsqueeze(0).expand(batch_size, -1, -1, -1)  # Shape: [batch, heads, batch * img_tokens, dim]
-        global_value = global_value.unsqueeze(0).expand(batch_size, -1, -1, -1)  # Shape: [batch, heads, batch * img_tokens, dim]
-
-        # Concatenate text tokens back with the global image token pool
-        extended_key = torch.cat([key[:, :, :text_token_count], global_key], dim=2)  # Shape: [batch, heads, text_token_count + batch * img_tokens, dim]
-        extended_value = torch.cat([value[:, :, :text_token_count], global_value], dim=2)  # Same shape
-
-        # Apply extended self-attention
-        hidden_states = F.scaled_dot_product_attention(query, extended_key, extended_value, dropout_p=0.0, is_causal=False)
-
-    return hidden_states
-
-
-
-def extended_attention_batch2(query, key, value, curr_step, t_range, text_token_count=77):
-    # Check if we are in the extended attention range
-    apply_extended = any(start <= curr_step <= end for start, end in t_range)
-
-    # First image attends normally. query.shape torch.Size([2, 24, 4173, 128]) key.shape torch.Size([2, 24, 4173, 128]) value.shape torch.Size([2, 24, 4173, 128]) hidden_states_0.shape  torch.Size([1, 24, 4173, 128])
-    hidden_states_0 = F.scaled_dot_product_attention(query[:1], key[:1], value[:1], dropout_p=0.0, is_causal=False)
-
-    if apply_extended:
-        # Select only the image tokens (not text tokens) from the first image. added_key.shape torch.Size([24, 4096, 128]) added_value.shape torch.Size([24, 4096, 128])
-        added_key = key[0, :, text_token_count:]
-        added_value = value[0, :, text_token_count:]
-
-        # Extend key and value for the second image by adding first image's image tokens. extended_key.shape torch.Size([1, 24, 8269, 128]) extended_value.shape torch.Size([1, 24, 8269, 128])
-        extended_key = torch.cat([added_key, key[1]], dim=1).unsqueeze(0)
-        extended_value = torch.cat([added_value, value[1]], dim=1).unsqueeze(0)
-
-        # Compute extended attention for the second image hidden_states_1.shape torch.Size([1, 24, 4173, 128])
-        hidden_states_1 = F.scaled_dot_product_attention(query[1:2], extended_key, extended_value, dropout_p=0.0, is_causal=False)
-    else:
-        # Second image attends normally if not in the t_range
-        hidden_states_1 = F.scaled_dot_product_attention(query[1:2], key[1:2], value[1:2], dropout_p=0.0, is_causal=False)
-
-    # Concatenate outputs hidden_states.shape torch.Size([2, 24, 4173, 128])
-    hidden_states = torch.cat([hidden_states_0, hidden_states_1], dim=0)
-
-    return hidden_states
+#
+# def extended_attention_batch2(query, key, value, curr_step, t_range, text_token_count=77):
+#     # Check if we are in the extended attention range
+#     apply_extended = any(start <= curr_step <= end for start, end in t_range)
+#
+#     # First image attends normally. query.shape torch.Size([2, 24, 4173, 128]) key.shape torch.Size([2, 24, 4173, 128]) value.shape torch.Size([2, 24, 4173, 128]) hidden_states_0.shape  torch.Size([1, 24, 4173, 128])
+#     hidden_states_0 = F.scaled_dot_product_attention(query[:1], key[:1], value[:1], dropout_p=0.0, is_causal=False)
+#
+#     if apply_extended:
+#         # Select only the image tokens (not text tokens) from the first image. added_key.shape torch.Size([24, 4096, 128]) added_value.shape torch.Size([24, 4096, 128])
+#         added_key = key[0, :, text_token_count:]
+#         added_value = value[0, :, text_token_count:]
+#
+#         # Extend key and value for the second image by adding first image's image tokens. extended_key.shape torch.Size([1, 24, 8269, 128]) extended_value.shape torch.Size([1, 24, 8269, 128])
+#         extended_key = torch.cat([added_key, key[1]], dim=1).unsqueeze(0)
+#         extended_value = torch.cat([added_value, value[1]], dim=1).unsqueeze(0)
+#
+#         # Compute extended attention for the second image hidden_states_1.shape torch.Size([1, 24, 4173, 128])
+#         hidden_states_1 = F.scaled_dot_product_attention(query[1:2], extended_key, extended_value, dropout_p=0.0, is_causal=False)
+#     else:
+#         # Second image attends normally if not in the t_range
+#         hidden_states_1 = F.scaled_dot_product_attention(query[1:2], key[1:2], value[1:2], dropout_p=0.0, is_causal=False)
+#
+#     # Concatenate outputs hidden_states.shape torch.Size([2, 24, 4173, 128])
+#     hidden_states = torch.cat([hidden_states_0, hidden_states_1], dim=0)
+#
+#     return hidden_states
 
 
 
