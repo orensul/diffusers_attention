@@ -68,6 +68,7 @@ def register_my_attention_processors(transformer, attention_store, extended_attn
             condition = multi_transformer_conditions.get(layers_extended_config, lambda _: False)
             logger.debug(f"Iteration: {i}")
             logger.debug(f"Layer Type: {layer_type}")
+            logger.debug(f"layers_extended_config: {layers_extended_config}")
             logger.debug(f"Condition: {condition(i)}")
 
             return (
@@ -79,6 +80,7 @@ def register_my_attention_processors(transformer, attention_store, extended_attn
             condition = single_transformer_conditions.get(layers_extended_config, lambda _: False)
             logger.debug(f"Iteration: {i}")
             logger.debug(f"Layer Type: {layer_type}")
+            logger.debug(f"layers_extended_config: {layers_extended_config}")
             logger.debug(f"Condition: {condition(i)}")
             return (
                 ExtendedFluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
