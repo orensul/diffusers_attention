@@ -131,7 +131,7 @@ class AttentionFluxPipeline(FluxPipeline):
         max_sequence_length: int = 512,
         extended_attn_kwargs: Optional[Dict] = None,
         layers_extended_config: int = 0,
-
+        dropout_value: float = 0.0,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -315,7 +315,7 @@ class AttentionFluxPipeline(FluxPipeline):
                     img_ids=latent_image_ids,
                     joint_attention_kwargs=self.joint_attention_kwargs,
                     return_dict=False,
-                    proccesor_kwargs={"step_index": i},
+                    proccesor_kwargs={"dropout_value": dropout_value},
                 )[0]
 
                 # compute the previous noisy sample x_t -> x_t-1

@@ -131,7 +131,7 @@ import torch.nn.functional as F
 #     return hidden_states
 
 
-def anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=77):
+def anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=77, dropout_value=0.0):
     """
     Implements anchored subject-driven self-attention where every image attends to:
     - Itself
@@ -155,28 +155,31 @@ def anchored_attention_batch(query, key, value, curr_step, t_range, text_token_c
     hidden_states = F.scaled_dot_product_attention(query, key, value, dropout_p=0.0, is_causal=False)
 
     if apply_extended:
+        N_ANCHORS = 2
+        N_EXTRA = batch_size - N_ANCHORS
+
         # Extract only the image tokens (excluding text tokens) from all images
         image_key = key[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
         image_value = value[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
 
         # Get image tokens from the first two images (anchors)
-        anchor_keys = image_key[:2]  # Shape: [2, heads, img_tokens, dim]
-        anchor_values = image_value[:2]  # Shape: [2, heads, img_tokens, dim]
+        anchor_keys = image_key[:N_ANCHORS]  # Shape: [2, heads, img_tokens, dim]
+        anchor_values = image_value[:N_ANCHORS]  # Shape: [2, heads, img_tokens, dim]
 
         # Reshape anchors to match batch size for easy broadcasting
-        anchor_keys = anchor_keys.permute(1, 0, 2, 3).reshape(heads, -1, dim)  # Shape: [heads, 2 * img_tokens, dim]
-        anchor_values = anchor_values.permute(1, 0, 2, 3).reshape(heads, -1, dim)  # Shape: [heads, 2 * img_tokens, dim]
-
-        # Expand anchors so each image gets access to them
-        anchor_keys = anchor_keys.unsqueeze(0).expand(batch_size, -1, -1, -1)  # Shape: [batch, heads, 2 * img_tokens, dim]
-        anchor_values = anchor_values.unsqueeze(0).expand(batch_size, -1, -1, -1)  # Shape: [batch, heads, 2 * img_tokens, dim]
+        anchor_keys = anchor_keys.permute(1, 0, 2, 3).reshape(heads, -1, dim).unsqueeze(0)  # Shape: [1, heads, 2 * img_tokens, dim]
+        anchor_values = anchor_values.permute(1, 0, 2, 3).reshape(heads, -1, dim).unsqueeze(0)  # Shape: [1, heads, 2 * img_tokens, dim]
 
         # Concatenate each image's own tokens with the anchor tokens
-        extended_key = torch.cat([key[:, :, :text_token_count], key[:, :, text_token_count:], anchor_keys], dim=2)
-        extended_value = torch.cat([value[:, :, :text_token_count], value[:, :, text_token_count:], anchor_values], dim=2)
+        extended_key_anchor = torch.cat([key[:N_ANCHORS, :, :text_token_count], anchor_keys.expand(N_ANCHORS, -1, -1, -1)], dim=2)
+        extended_value_anchor = torch.cat([value[:N_ANCHORS, :, :text_token_count], anchor_values.expand(N_ANCHORS, -1, -1, -1)], dim=2)
+        extended_key_extra = torch.cat([key[N_ANCHORS:], anchor_keys.expand(N_EXTRA, -1, -1, -1)], dim=2)
+        extended_value_extra = torch.cat([value[N_ANCHORS:], anchor_values.expand(N_EXTRA, -1, -1, -1)], dim=2)
 
         # Apply extended self-attention
-        hidden_states = F.scaled_dot_product_attention(query, extended_key, extended_value, dropout_p=0.0, is_causal=False)
+        hidden_states_anchors = F.scaled_dot_product_attention(query[:N_ANCHORS], extended_key_anchor, extended_value_anchor, dropout_p=dropout_value, is_causal=False)
+        hidden_states_extra = F.scaled_dot_product_attention(query[N_ANCHORS:], extended_key_extra, extended_value_extra, dropout_p=dropout_value, is_causal=False)
+        hidden_states = torch.cat([hidden_states_anchors, hidden_states_extra], dim=0)
 
     return hidden_states
 
@@ -435,6 +438,7 @@ class FluxAttnProcessor2_0:
         encoder_hidden_states: torch.FloatTensor = None,
         attention_mask: Optional[torch.FloatTensor] = None,
         image_rotary_emb: Optional[torch.Tensor] = None,
+        dropout_value: Optional[float] = 0.0,
     ) -> torch.FloatTensor:
         input_ndim = hidden_states.ndim
         if input_ndim == 4:
@@ -535,6 +539,7 @@ class ExtendedFluxAttnProcessor2_0:
         encoder_hidden_states: torch.FloatTensor = None,
         attention_mask: Optional[torch.FloatTensor] = None,
         image_rotary_emb: Optional[torch.Tensor] = None,
+        dropout_value: Optional[float] = 0.0,
     ) -> torch.FloatTensor:
         input_ndim = hidden_states.ndim
         if input_ndim == 4:
@@ -597,7 +602,8 @@ class ExtendedFluxAttnProcessor2_0:
         # hidden_states = extended_self_attention(query, key, value)
         curr_step = self.attention_store.curr_iter
         t_range = self.t_range
-        hidden_states = anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=77)
+        text_token_count = query.shape[2] - 4096 # Assuming image of shape 1024x1024
+        hidden_states = anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=text_token_count, dropout_value=dropout_value)
 
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
         hidden_states = hidden_states.to(query.dtype)
@@ -642,6 +648,7 @@ class FluxSingleAttnProcessor2_0:
         encoder_hidden_states: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.FloatTensor] = None,
         image_rotary_emb: Optional[torch.Tensor] = None,
+        dropout_value: Optional[float] = 0.0,
     ) -> torch.Tensor:
         input_ndim = hidden_states.ndim
 
@@ -709,6 +716,7 @@ class ExtendedFluxSingleAttnProcessor2_0:
         encoder_hidden_states: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.FloatTensor] = None,
         image_rotary_emb: Optional[torch.Tensor] = None,
+        dropout_value: Optional[float] = 0.0,
     ) -> torch.Tensor:
         input_ndim = hidden_states.ndim
 
@@ -753,7 +761,8 @@ class ExtendedFluxSingleAttnProcessor2_0:
         # hidden_states = extended_self_attention(query, key, value)
         curr_step = self.attention_store.curr_iter
         t_range = self.t_range
-        hidden_states = anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=77)
+        text_token_count = query.shape[2] - 4096 # Assuming image of shape 1024x1024
+        hidden_states = anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=text_token_count, dropout_value=dropout_value)
 
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
         hidden_states = hidden_states.to(query.dtype)
