@@ -32,6 +32,8 @@ prompts_path = 'prompts_benchmark/prompts.yaml'
 # prompts = ["a photo of an astronaut riding a horse on mars", "a photo of an astronaut sitting with a pina colada cocktail in the beach of Thiland", "a photo of an astronaut landing on mars", "a photo of an astronaut leaving the earth", "a photo of an astronaut with a cat on mars"]
 # prompts = ["A photo of An athletic woman, lifting weights", "A photo of An athletic woman, at a sports stadium", "A photo of An athletic woman, wearing a tracksuit", "A photo of An athletic woman, dressed in a ballet outfit", "A photo of An athletic woman, wearing hiking attire"]
 
+seed = 2
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 prompts1 =  [
                 "A fairy, in a mystical glen",
@@ -91,12 +93,18 @@ prompts = [prompts1, prompts2, prompts3, prompts4, prompts5, prompts6, prompts7]
 
 
 
-# end range should be at most 17
 
-timestep_ranges = [[3, 8], [3, 11], [3, 14], [5, 17], [5, 14], [5, 11], [7, 10], [7, 13], [7, 16]]
-timestep_ranges = [[5, 15]]
+# timestep_ranges = [[3, 8], [3, 11], [3, 14], [5, 17], [5, 14], [5, 11], [7, 10], [7, 13], [7, 16]]
+# timestep_ranges = [[0, 20]]
+# layers_config = ["none",  "multi", "multi_even",  "multi_first_half", "multi_second_half", "q1", "q2", "q3", "q4", "single", "single_even",  "single_first_half", "single_second_half", "mix"]
+# layers_config = ["none", ""]
 
-layers_config = ["none",  "multi", "multi_even",  "multi_first_half", "multi_second_half", "q1", "q2", "q3", "q4", "single", "single_even",  "single_first_half", "single_second_half", "mix"]
+extended_attn_kwargs = {'t_range': [(0, 20)]}
+
+
+
+
+
 
 
 # FLUX Model class
@@ -132,40 +140,35 @@ class FLUXModel:
         ).images
 
 
+
+
 def test_model():
     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
     pipe = flux_model.get_pipe()
-    for timestep_start, timestep_end in timestep_ranges:
-        for prompts_in_batch in prompts:
-            for layer_conf in layers_config:
-                images = flux_model.get_images(
+    for prompts_in_batch in prompts:
+        for single_config, multi_config in [("none", "none"), ("even", "second_half"), ("even", "first_half"), ("even", "even"), ("first_half", "second_half"), ("first_half", "first_half"), ("first_half", "even"), ("second_half", "second_half"), ("second_half", "first_half"), ("second_half", "even")]:
+            for dropout in [0., 0.25, 0.5]:
+                images = pipe(
                     pipe=pipe,
                     prompt=prompts_in_batch,
-                    seed=2,
-                    n_steps=30,
                     guidance_scale=3.5,
                     height=1024,
                     width=1024,
-                    prompt_length=PROMPT_LEN,
-                    perform_sdsa = True,
-                    timestep_start_range=timestep_start,
-                    timestep_end_range=timestep_end,
-                    layers_extended_config=layer_conf
+                    num_inference_steps=30,
+                    extended_attn_kwargs=extended_attn_kwargs,
+                    layers_extended_config={'single': single_config, 'multi': multi_config},
+                    generator=torch.Generator(device).manual_seed(seed),
+                    max_sequence_length=PROMPT_LEN,
+                    dropout_value=dropout,
+                    same_latents=False,
                 )
-                # Save images in the dated directory
                 for i in range(len(images)):
                     prompt = prompts_in_batch[i]
                     img = images[i]
                     prompt = prompt.replace(" ", "_")
-                    output_path = os.path.join(output_dir, f"{prompt}_timestep_{timestep_start}_{timestep_end}_layers_config_{layer_conf}.png")
+                    output_path = os.path.join(output_dir, f"{prompt}_timestep_{extended_attn_kwargs['t_range'][0][0]}_{extended_attn_kwargs['t_range'][0][1]}_layers_config_{single_config}_{multi_config}.png")
                     img.save(output_path)
                     print(f"Image saved to {output_path}")
-
-
-
-
-    # show_heatmap(pipe, img, prompt)
-    # show_distribution(pipe, prompt)
 
 
 
