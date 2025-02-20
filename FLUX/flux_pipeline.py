@@ -7,26 +7,6 @@ from diffusers.pipelines.flux.pipeline_output import FluxPipelineOutput
 from FLUX.attention_processor import ExtendedFluxAttnProcessor2_0, ExtendedFluxSingleAttnProcessor2_0, FluxAttnProcessor2_0, FluxSingleAttnProcessor2_0
 from FLUX.attention_store import AttentionStore
 
-# def register_my_attention_processors(transformer, attention_store, extended_attn_kwargs, layers_extended_config):
-#     attn_procs = {}
-#
-#     for i, (name, processor) in enumerate(transformer.attn_processors.items()):
-#         layer_name = ".".join(name.split(".")[:2])
-#
-#         if layer_name.startswith("transformer_blocks"):
-#             if (layers_extended_config == "multi_even" and i % 2 == 0) or layers_extended_config == "multi" or (layers_extended_config == "quarter1" and i <= 9) or (layers_extended_config == "quarter2" and i > 9 <= 18) or (layers_extended_config == "mix" and i > 11):
-#                 attn_procs[name] = ExtendedFluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
-#             else:
-#                 attn_procs[name] = FluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
-#
-#         elif layer_name.startswith("single_transformer_blocks"):
-#             if (layers_extended_config == "single_even" and i % 2 == 0) or layers_extended_config == "single" or (layers_extended_config == "quarter3" and i <= 38) or (layers_extended_config == "quarter4" and i > 38) or (layers_extended_config == "mix" and i > 49):
-#                 attn_procs[name] = ExtendedFluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
-#             else:
-#                 attn_procs[name] = FluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
-#
-#     transformer.set_attn_processor(attn_procs)
-
 import logging
 
 logging.basicConfig(
@@ -40,35 +20,33 @@ logger = logging.getLogger(__name__)
 def register_my_attention_processors(transformer, attention_store, extended_attn_kwargs, layers_extended_config):
     attn_procs = {}
 
-    multi_transformer_conditions = {
-        "multi_even": lambda i: i % 2 == 0,
-        "multi": lambda i: True,
-        "multi_first_half": lambda i: i <= 9,
-        "q1": lambda i: i < 14,
-        "multi_second_half": lambda i: 9 < i <= 18,
-        "q2": lambda i: 14 <= i <= 18,
-        "mix": lambda i: 11 < i <= 18,
+    attn_layers = [x.split('.')[0] for x in transformer.attn_processors.keys()]
+    multi_layer_count = sum(1 for layer in attn_layers if layer == "transformer_blocks")
+    single_layer_count = sum(1 for layer in attn_layers if layer == "single_transformer_blocks")
+
+    multi_conditions = {
+        "none": lambda i: False,
+        "all": lambda i: True, 
+        "even": lambda i: i % 2 == 0,
+        "first_half": lambda i: i <= multi_layer_count // 2,
+        "second_half": lambda i: i > multi_layer_count // 2
     }
 
-    single_transformer_conditions = {
-        "single_even": lambda i: i % 2 == 0,
-        "single": lambda i: True,
-        "single_first_half": lambda i: 19 <= i <= 38,
-        "q2": lambda  i : 19 <= i < 29,
-        "q3": lambda  i : 29 <= i < 44,
-        "q4": lambda  i : 44 <= i <= 57,
-        "single_second_half": lambda i: i > 38,
-        "mix": lambda i: 19 <= i <= 25,
-    }
-
+    single_conditions = {
+        "none": lambda i: False,
+        "all": lambda i: True, 
+        "even": lambda i: i % 2 == 0,
+        "first_half": lambda i: i <= multi_layer_count + (single_layer_count // 2),
+        "second_half": lambda i: i > multi_layer_count + (single_layer_count // 2)
+    }   
 
     def get_processor(layer_type, i):
         """Determine which processor to use based on layer type and index."""
         if layer_type == "transformer_blocks":
-            condition = multi_transformer_conditions.get(layers_extended_config, lambda _: False)
+            condition = multi_conditions.get(layers_extended_config['multi'], lambda _: False)
             logger.debug(f"Iteration: {i}")
             logger.debug(f"Layer Type: {layer_type}")
-            logger.debug(f"layers_extended_config: {layers_extended_config}")
+            logger.debug(f"layers_extended_config: {layers_extended_config['multi']}")
             logger.debug(f"Condition: {condition(i)}")
 
             return (
@@ -77,10 +55,10 @@ def register_my_attention_processors(transformer, attention_store, extended_attn
                 else FluxAttnProcessor2_0(attention_store, extended_attn_kwargs)
             )
         elif layer_type == "single_transformer_blocks":
-            condition = single_transformer_conditions.get(layers_extended_config, lambda _: False)
+            condition = single_conditions.get(layers_extended_config['single'], lambda _: False)
             logger.debug(f"Iteration: {i}")
             logger.debug(f"Layer Type: {layer_type}")
-            logger.debug(f"layers_extended_config: {layers_extended_config}")
+            logger.debug(f"layers_extended_config: {layers_extended_config['single']}")
             logger.debug(f"Condition: {condition(i)}")
             return (
                 ExtendedFluxSingleAttnProcessor2_0(attention_store, extended_attn_kwargs)
@@ -98,9 +76,7 @@ def register_my_attention_processors(transformer, attention_store, extended_attn
         logger.debug(f"Layer Type: {layer_type}")
         logger.debug(f"Layer Name: {'.'.join(name.split('.')[:2])}")
 
-        if layer_type in ["transformer_blocks", "single_transformer_blocks"]:
-            logger.debug("get_processor")
-            attn_procs[name] = get_processor(layer_type, i)
+        attn_procs[name] = get_processor(layer_type, i)
 
     transformer.set_attn_processor(attn_procs)
     logger.info("Transformer attention processors updated successfully.")
@@ -130,8 +106,10 @@ class AttentionFluxPipeline(FluxPipeline):
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
         max_sequence_length: int = 512,
         extended_attn_kwargs: Optional[Dict] = None,
-        layers_extended_config: int = 0,
+        layers_extended_config: Optional[str] = None,
+
         dropout_value: float = 0.0,
+        same_latents: bool = False,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -262,6 +240,9 @@ class AttentionFluxPipeline(FluxPipeline):
             generator,
             latents,
         )
+
+        if same_latents:
+            latents = latents[0].unsqueeze(0).repeat(batch_size,1,1)
 
         self.attention_store = AttentionStore()
         register_my_attention_processors(self.transformer, self.attention_store, extended_attn_kwargs, layers_extended_config)

@@ -151,9 +151,6 @@ def anchored_attention_batch(query, key, value, curr_step, t_range, text_token_c
     batch_size, heads, tokens, dim = query.shape
     apply_extended = any(start <= curr_step <= end for start, end in t_range)
 
-    # Compute standard self-attention for all images (default behavior)
-    hidden_states = F.scaled_dot_product_attention(query, key, value, dropout_p=0.0, is_causal=False)
-
     if apply_extended:
         N_ANCHORS = 2
         N_EXTRA = batch_size - N_ANCHORS
@@ -163,23 +160,42 @@ def anchored_attention_batch(query, key, value, curr_step, t_range, text_token_c
         image_value = value[:, :, text_token_count:]  # Shape: [batch, heads, img_tokens, dim]
 
         # Get image tokens from the first two images (anchors)
-        anchor_keys = image_key[:N_ANCHORS]  # Shape: [2, heads, img_tokens, dim]
-        anchor_values = image_value[:N_ANCHORS]  # Shape: [2, heads, img_tokens, dim]
+        anchor_keys = image_key[:N_ANCHORS]  # Shape: [N_ANCHORS, heads, img_tokens, dim]
+        anchor_values = image_value[:N_ANCHORS]  # Shape: [N_ANCHORS, heads, img_tokens, dim]
 
-        # Reshape anchors to match batch size for easy broadcasting
-        anchor_keys = anchor_keys.permute(1, 0, 2, 3).reshape(heads, -1, dim).unsqueeze(0)  # Shape: [1, heads, 2 * img_tokens, dim]
-        anchor_values = anchor_values.permute(1, 0, 2, 3).reshape(heads, -1, dim).unsqueeze(0)  # Shape: [1, heads, 2 * img_tokens, dim]
+        if dropout_value > 0:
+            # Set seed for reproducible dropout
+            torch.manual_seed(0)
+            dropout_mask = torch.rand_like(anchor_keys[0, 0, :, 0]) > dropout_value  # Shape: [heads, img_tokens]
+            anchor_keys = anchor_keys[:,:,dropout_mask,:] 
+            anchor_values = anchor_values[:,:,dropout_mask,:]
 
-        # Concatenate each image's own tokens with the anchor tokens
-        extended_key_anchor = torch.cat([key[:N_ANCHORS, :, :text_token_count], anchor_keys.expand(N_ANCHORS, -1, -1, -1)], dim=2)
-        extended_value_anchor = torch.cat([value[:N_ANCHORS, :, :text_token_count], anchor_values.expand(N_ANCHORS, -1, -1, -1)], dim=2)
-        extended_key_extra = torch.cat([key[N_ANCHORS:], anchor_keys.expand(N_EXTRA, -1, -1, -1)], dim=2)
-        extended_value_extra = torch.cat([value[N_ANCHORS:], anchor_values.expand(N_EXTRA, -1, -1, -1)], dim=2)
+        # For each anchor image, create extended key and value tensors that include other anchor images
+        additional_anchors_keys = torch.empty((N_ANCHORS, heads, (N_ANCHORS - 1) * anchor_keys.shape[2], dim), device=query.device, dtype=query.dtype)
+        additional_anchors_values = torch.empty((N_ANCHORS, heads, (N_ANCHORS - 1) * anchor_keys.shape[2], dim), device=query.device, dtype=query.dtype)
+        for i in range(N_ANCHORS):
+            other_anchors_keys = torch.cat([anchor_keys[:i], anchor_keys[i+1:]], dim=0).permute(1, 0, 2, 3).reshape(heads, -1, dim)  # Shape: [heads, N_ANCHORS-1 * img_tokens, dim]
+            other_anchors_values = torch.cat([anchor_values[:i], anchor_values[i+1:]], dim=0).permute(1, 0, 2, 3).reshape(heads, -1, dim) # Shape: [heads, N_ANCHORS-1 * img_tokens, dim]
+            
+            additional_anchors_keys[i] = other_anchors_keys
+            additional_anchors_values[i] = other_anchors_values
+
+        # For each non-anchor image, create extended key and value tensors that include all anchor images
+        additional_extra_keys = anchor_keys.permute(1, 0, 2, 3).reshape(heads, -1, dim).unsqueeze(0).expand(N_EXTRA, -1, -1, -1)  # Shape: [N_EXTRA, heads, N_ANCHORS * img_tokens, dim]
+        additional_extra_values = anchor_values.permute(1, 0, 2, 3).reshape(heads, -1, dim).unsqueeze(0).expand(N_EXTRA, -1, -1, -1)  # Shape: [N_EXTRA, heads, N_ANCHORS * img_tokens, dim]
 
         # Apply extended self-attention
-        hidden_states_anchors = F.scaled_dot_product_attention(query[:N_ANCHORS], extended_key_anchor, extended_value_anchor, dropout_p=dropout_value, is_causal=False)
-        hidden_states_extra = F.scaled_dot_product_attention(query[N_ANCHORS:], extended_key_extra, extended_value_extra, dropout_p=dropout_value, is_causal=False)
+        hidden_states_anchors = F.scaled_dot_product_attention(query[:N_ANCHORS], 
+                                                               torch.cat([key[:N_ANCHORS], additional_anchors_keys], dim=2), 
+                                                               torch.cat([value[:N_ANCHORS], additional_anchors_values], dim=2), 
+                                                               dropout_p=0.0, is_causal=False)
+        hidden_states_extra = F.scaled_dot_product_attention(query[N_ANCHORS:], 
+                                                             torch.cat([key[N_ANCHORS:], additional_extra_keys], dim=2), 
+                                                             torch.cat([value[N_ANCHORS:], additional_extra_values], dim=2), 
+                                                             dropout_p=0.0, is_causal=False)
         hidden_states = torch.cat([hidden_states_anchors, hidden_states_extra], dim=0)
+    else:
+        hidden_states = F.scaled_dot_product_attention(query, key, value, dropout_p=dropout_value, is_causal=False)
 
     return hidden_states
 
