@@ -170,7 +170,7 @@ def test_model(prompts):
     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
     pipe = flux_model.get_pipe()
     for prompts_in_batch_id, prompts_in_batch in enumerate(prompts):
-        for single_config, multi_config in [("none", "none")]: # , ("even", "second_half"), ("even", "first_half"), ("even", "even"), ("first_half", "second_half"), ("first_half", "first_half"), ("first_half", "even"), ("second_half", "second_half"), ("second_half", "first_half"), ("second_half", "even")]:
+        for single_config, multi_config in [("none", "none"), ("even", "second_half"), ("first_half", "second_half")]: # , ("even", "second_half"), ("even", "first_half"), ("even", "even"), ("first_half", "second_half"), ("first_half", "first_half"), ("first_half", "even"), ("second_half", "second_half"), ("second_half", "first_half"), ("second_half", "even")]:
             for dropout in [0.0]:
                 images = pipe(
                     prompt=prompts_in_batch,
@@ -297,9 +297,9 @@ def read_prompts_from_stories(stories_path):
     df = pd.read_csv(stories_path)
     df["full_stories"] = df["full_stories"].apply(lambda x: eval(x) if isinstance(x, str) else x)
     df = df.drop_duplicates(subset=["story_id"], keep="first")
-    df["num_sentences"] = df["full_stories"].apply(count_sentences)
-    filtered_df = df[df["num_sentences"].isin([5])]
-    return filtered_df["full_stories"].tolist()
+    # df["num_sentences"] = df["full_stories"].apply(count_sentences)
+    # filtered_df = df[df["num_sentences"].isin([5])]
+    return df["full_stories"].tolist()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
