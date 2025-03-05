@@ -89,8 +89,32 @@ prompts7 = [
                 "origami style of A dragon, resting in a cavern"
             ]
 
-prompts = [prompts1, prompts2, prompts3, prompts4, prompts5, prompts6, prompts7]
+prompts8 = [
+    "A photorealistic illustration of Kaylee a young woman in her early 20s with a slim yet athletic build. She has long, wavy brown hair that cascades past her shoulders, with a few loose strands framing her oval-shaped face. Her hazel eyes carry a warm yet focused expression, and her slightly arched eyebrows give her a naturally confident look. Her light skin has a subtle rosy undertone. She wears minimal makeup, with a touch of mascara and soft pink lips. She is dressed in a crisp white blouse, slightly loose-fitting but tucked neatly into her high-waisted black pants, which are tailored and elegant. The blouse has a V-neck with delicate buttons running down the front, and the sleeves are long with cuffs that are folded back slightly. She wears black leather loafers or modest heels, adding to her polished yet practical appearance. On her left wrist, she wears a silver watch, and a small silver pendant necklace rests just below her collarbone. Her posture is relaxed yet poised—standing with one hand lightly touching her hip while the other rests casually by her side. She holds a small leather handbag over her shoulder, its thin strap resting diagonally across her body. Kaylee reaches into her bag, pulling out a small notebook and pen before jotting something down.",
+    "A photorealistic illustration of Kaylee a young woman in her early 20s with a slim yet athletic build. She has long, wavy brown hair that cascades past her shoulders, with a few loose strands framing her oval-shaped face. Her hazel eyes carry a warm yet focused expression, and her slightly arched eyebrows give her a naturally confident look. Her light skin has a subtle rosy undertone. She wears minimal makeup, with a touch of mascara and soft pink lips. She is dressed in a crisp white blouse, slightly loose-fitting but tucked neatly into her high-waisted black pants, which are tailored and elegant. The blouse has a V-neck with delicate buttons running down the front, and the sleeves are long with cuffs that are folded back slightly. She wears black leather loafers or modest heels, adding to her polished yet practical appearance. On her left wrist, she wears a silver watch, and a small silver pendant necklace rests just below her collarbone. Her posture is relaxed yet poised—standing with one hand lightly touching her hip while the other rests casually by her side. She holds a small leather handbag over her shoulder, its thin strap resting diagonally across her body. Kaylee leans against the wooden desk, one hand resting on the counter as she speaks with the hotel concierge.",
+    "A photorealistic illustration of Kaylee a young woman in her early 20s with a slim yet athletic build. She has long, wavy brown hair that cascades past her shoulders, with a few loose strands framing her oval-shaped face. Her hazel eyes carry a warm yet focused expression, and her slightly arched eyebrows give her a naturally confident look. Her light skin has a subtle rosy undertone. She wears minimal makeup, with a touch of mascara and soft pink lips. She is dressed in a crisp white blouse, slightly loose-fitting but tucked neatly into her high-waisted black pants, which are tailored and elegant. The blouse has a V-neck with delicate buttons running down the front, and the sleeves are long with cuffs that are folded back slightly. She wears black leather loafers or modest heels, adding to her polished yet practical appearance. On her left wrist, she wears a silver watch, and a small silver pendant necklace rests just below her collarbone. Her posture is relaxed yet poised—standing with one hand lightly touching her hip while the other rests casually by her side. She holds a small leather handbag over her shoulder, its thin strap resting diagonally across her body. Kaylee checks the time on her silver watch, tapping her fingers against her wrist thoughtfully.",
+    "A photorealistic illustration of Kaylee a young woman in her early 20s with a slim yet athletic build. She has long, wavy brown hair that cascades past her shoulders, with a few loose strands framing her oval-shaped face. Her hazel eyes carry a warm yet focused expression, and her slightly arched eyebrows give her a naturally confident look. Her light skin has a subtle rosy undertone. She wears minimal makeup, with a touch of mascara and soft pink lips. She is dressed in a crisp white blouse, slightly loose-fitting but tucked neatly into her high-waisted black pants, which are tailored and elegant. The blouse has a V-neck with delicate buttons running down the front, and the sleeves are long with cuffs that are folded back slightly. She wears black leather loafers or modest heels, adding to her polished yet practical appearance. On her left wrist, she wears a silver watch, and a small silver pendant necklace rests just below her collarbone. Her posture is relaxed yet poised—standing with one hand lightly touching her hip while the other rests casually by her side. She holds a small leather handbag over her shoulder, its thin strap resting diagonally across her body. Kaylee places her suitcase beside her, tapping her foot lightly as she waits for check-in.",
+    "A photorealistic illustration of Kaylee a young woman in her early 20s with a slim yet athletic build. She has long, wavy brown hair that cascades past her shoulders, with a few loose strands framing her oval-shaped face. Her hazel eyes carry a warm yet focused expression, and her slightly arched eyebrows give her a naturally confident look. Her light skin has a subtle rosy undertone. She wears minimal makeup, with a touch of mascara and soft pink lips. She is dressed in a crisp white blouse, slightly loose-fitting but tucked neatly into her high-waisted black pants, which are tailored and elegant. The blouse has a V-neck with delicate buttons running down the front, and the sleeves are long with cuffs that are folded back slightly. She wears black leather loafers or modest heels, adding to her polished yet practical appearance. On her left wrist, she wears a silver watch, and a small silver pendant necklace rests just below her collarbone. Her posture is relaxed yet poised—standing with one hand lightly touching her hip while the other rests casually by her side. She holds a small leather handbag over her shoulder, its thin strap resting diagonally across her body. Kaylee presses the elevator button, watching the golden numbers above the door light up in sequence.",
 
+]
+
+prompts9 = [
+    "a photorealistic illustration of Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, stand in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk. Kaylee reaches into her bag, pulling out a small notebook and pen before jotting something down.",
+    "a photorealistic illustration of Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, stand in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk. Kaylee leans against the wooden desk, one hand resting on the counter as she speaks with the hotel concierge.",
+    "a photorealistic illustration of Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, stand in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk. Kaylee checks the time on her silver watch, tapping her fingers against her wrist thoughtfully.",
+    "a photorealistic illustration of Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, stand in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk. Kaylee places her suitcase beside her, tapping her foot lightly as she waits for check-in.",
+    "a photorealistic illustration of Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, stand in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk. Kaylee presses the elevator button, watching the golden numbers above the door light up in sequence."
+]
+
+prompts10 = [
+    "A photorealistic illustration of Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, stand in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk",'a photorealistic illustration of Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, stand in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk, she places the clrealy visable sleek silver letter opener with an engraved handle, inside the wooden desk drawer, polished and dark brown,.',
+    "A photorealistic illustration of Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, stand in the  spacious hotel lobby with marble floors, a chandelier, and a wooden desk, she place the clrealy visable sleek silver letter opener with an engraved handle, inside the wooden desk drawer, polished and dark brown,, Liam, a young man with short black hair, wearing a blue shirt and dark jeans, watches her from far.",'a photorealistic illustration of The spacious hotel lobby with marble floors, a chandelier, and a wooden desk is empty.',
+    "A photorealistic illustration of Liam, a young man with short black hair, wearing a blue shirt and dark jeans, stand in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk.",
+    "A photorealistic illustration of Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, and Liam, a young man with short black hair, wearing a blue shirt and dark jeans, standing in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk.",
+    "A photorealistic illustration of Liam, a young man with short black hair, wearing a blue shirt and dark jeans, moves the clrealy visable sleek silver letter opener with an engraved handle, to the classic leather briefcase with brass buckles, in the spacious hotel lobby with marble floors, a chandelier, and a wooden desk. Kaylee, a young woman with long brown hair, wearing a white blouse and black pants, stand there and watch him.",
+    ]
+prompts = [prompts1, prompts2, prompts3, prompts4, prompts5, prompts6, prompts7]
+prompts = [prompts10]
 
 
 
@@ -142,14 +166,13 @@ class FLUXModel:
 
 
 
-def test_model():
+def test_model(prompts):
     flux_model = FLUXModel("black-forest-labs/FLUX.1-dev")
     pipe = flux_model.get_pipe()
-    for prompts_in_batch in prompts:
-        for single_config, multi_config in [("none", "none"), ("even", "second_half"), ("even", "first_half"), ("even", "even"), ("first_half", "second_half"), ("first_half", "first_half"), ("first_half", "even"), ("second_half", "second_half"), ("second_half", "first_half"), ("second_half", "even")]:
-            for dropout in [0., 0.25, 0.5]:
+    for prompts_in_batch_id, prompts_in_batch in enumerate(prompts):
+        for single_config, multi_config in [("none", "none")]: # , ("even", "second_half"), ("even", "first_half"), ("even", "even"), ("first_half", "second_half"), ("first_half", "first_half"), ("first_half", "even"), ("second_half", "second_half"), ("second_half", "first_half"), ("second_half", "even")]:
+            for dropout in [0.0]:
                 images = pipe(
-                    pipe=pipe,
                     prompt=prompts_in_batch,
                     guidance_scale=3.5,
                     height=1024,
@@ -161,12 +184,11 @@ def test_model():
                     max_sequence_length=PROMPT_LEN,
                     dropout_value=dropout,
                     same_latents=False,
-                )
+                ).images
                 for i in range(len(images)):
                     prompt = prompts_in_batch[i]
                     img = images[i]
-                    prompt = prompt.replace(" ", "_")
-                    output_path = os.path.join(output_dir, f"{prompt}_timestep_{extended_attn_kwargs['t_range'][0][0]}_{extended_attn_kwargs['t_range'][0][1]}_layers_config_{single_config}_{multi_config}.png")
+                    output_path = os.path.join(output_dir, f"sample_id_{prompts_in_batch_id}_prompt_{i}_timestep_{extended_attn_kwargs['t_range'][0][0]}_{extended_attn_kwargs['t_range'][0][1]}_layers_config_{single_config}_{multi_config}.png")
                     img.save(output_path)
                     print(f"Image saved to {output_path}")
 
@@ -265,8 +287,19 @@ def read_prompts():
 #     return anchor_mapping
 
 
+import pandas as pd
+
+def count_sentences(story):
+    return len(story) if isinstance(story, list) else 0
 
 
+def read_prompts_from_stories(stories_path):
+    df = pd.read_csv(stories_path)
+    df["full_stories"] = df["full_stories"].apply(lambda x: eval(x) if isinstance(x, str) else x)
+    df = df.drop_duplicates(subset=["story_id"], keep="first")
+    df["num_sentences"] = df["full_stories"].apply(count_sentences)
+    filtered_df = df[df["num_sentences"].isin([5])]
+    return filtered_df["full_stories"].tolist()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -283,6 +316,7 @@ if __name__ == '__main__':
     parser.add_argument('--out_dir', default="output_images", type=str, required=False)
     args = parser.parse_args()
 
+    prompts = read_prompts_from_stories('stories/full_stories.csv')
     # prompts = read_prompts()[:5]
     # prompts = [prompt for _, _, prompt in prompts]
-    test_model()
+    test_model(prompts)

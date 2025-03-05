@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="orens@firefoot-01.cs.huji.ac.il:22 agent" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="orens@firefoot-01.cs.huji.ac.il:22 password (2)" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
       <paths name="orens@binky-01.cs.huji.ac.il:22 password">
@@ -66,6 +66,20 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="orens@epona-01.cs.huji.ac.il:22 agent (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/cs/labs/dshahaf/orens/diffusers_attention" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="orens@epona-01.cs.huji.ac.il:22 agent (3)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/cs/labs/dshahaf/orens/diffusers_attention" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="orens@epona-02.cs.huji.ac.il:22 agent">
         <serverdata>
           <mappings>
@@ -74,6 +88,13 @@
         </serverdata>
       </paths>
       <paths name="orens@epona-02.cs.huji.ac.il:22 agent (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/cs/labs/dshahaf/orens/diffusers_attention" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="orens@epona-02.cs.huji.ac.il:22 agent (3)">
         <serverdata>
           <mappings>
             <mapping deploy="/cs/labs/dshahaf/orens/diffusers_attention" local="$PROJECT_DIR$" />
@@ -91,6 +112,27 @@
         <serverdata>
           <mappings>
             <mapping deploy="/cs/labs/dshshaf/orens/diffusers_attention" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="orens@firefoot-01.cs.huji.ac.il:22 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/cs/labs/dshahaf/orens/diffusers_attention" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="orens@firefoot-02.cs.huji.ac.il:22 agent">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_761" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="orens@firefoot-02.cs.huji.ac.il:22 agent (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/cs/labs/dshahaf/orens/diffusers_attention" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
