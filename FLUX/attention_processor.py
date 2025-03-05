@@ -131,7 +131,7 @@ import torch.nn.functional as F
 #     return hidden_states
 
 
-def anchored_attention_batch(query, key, value, curr_step, t_range, run_sdsa=False, text_token_count=512, dropout_value=0.0):
+def anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=512, dropout_value=0.0):
     """
     Implements anchored subject-driven self-attention where every image attends to:
     - Itself
@@ -149,7 +149,7 @@ def anchored_attention_batch(query, key, value, curr_step, t_range, run_sdsa=Fal
         torch.Tensor: The hidden states after applying self-attention.
     """
     batch_size, heads, tokens, dim = query.shape
-    apply_extended = any(start <= curr_step <= end for start, end in t_range) and run_sdsa
+    apply_extended = any(start <= curr_step <= end for start, end in t_range)
 
     if apply_extended:
         N_ANCHORS = 2
@@ -619,7 +619,7 @@ class ExtendedFluxAttnProcessor2_0:
         curr_step = self.attention_store.curr_iter
         t_range = self.t_range
         text_token_count = query.shape[2] - 4096 # Assuming image of shape 1024x1024
-        hidden_states = anchored_attention_batch(query, key, value, curr_step, t_range, run_sdsa=False, text_token_count=text_token_count, dropout_value=dropout_value)
+        hidden_states = anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=text_token_count, dropout_value=dropout_value)
 
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
         hidden_states = hidden_states.to(query.dtype)
@@ -778,7 +778,7 @@ class ExtendedFluxSingleAttnProcessor2_0:
         curr_step = self.attention_store.curr_iter
         t_range = self.t_range
         text_token_count = query.shape[2] - 4096 # Assuming image of shape 1024x1024
-        hidden_states = anchored_attention_batch(query, key, value, curr_step, t_range, run_sdsa=False, text_token_count=text_token_count, dropout_value=dropout_value)
+        hidden_states = anchored_attention_batch(query, key, value, curr_step, t_range, text_token_count=text_token_count, dropout_value=dropout_value)
 
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
         hidden_states = hidden_states.to(query.dtype)
